@@ -24,7 +24,10 @@ log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 FALLBACK_BPM = 120
-OUTPUT_CHOICES = [("usb12", "USB 1/2"), ("usb34", "USB 3/4"), ("all", "Mind (1–4)")]
+# verified on hardware 2026-11-07: USB 1/2 -> headphones + main output; USB 3/4 silent in Normal USB mode
+# (it is the Reamp input); so 1/2 is the default and the labels say so
+OUTPUT_CHOICES = [("usb12", "USB 1/2 – füles + kimenet"), ("usb34", "USB 3/4 – csak Reamp módban"),
+                  ("all", "Mind (1–4)")]
 
 CSS = """
 .takk-bpm { font-size: 76px; font-weight: 800; font-feature-settings: "tnum"; letter-spacing: -2px; }

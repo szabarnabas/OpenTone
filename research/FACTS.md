@@ -138,3 +138,9 @@
 - `03 00` GET then returns the new live tempo (instantaneous, from the last tap interval; seen 40..219 BPM),
   byte 8 switched 00 -> 01 after tapping (meaning unknown). Matches the display (~95-105 at the end of the test).
 - The rawmidi port is exclusive: only one program (OpenTone OR Takk) can talk to the pedal at a time.
+
+## USB playback routing (verified by ear 2026-11-07, pedal in Normal USB mode)
+- USB playback ch 1/2 (PipeWire FL/FR of the 4ch NUX sink) -> heard in headphones AND main output (shared mix).
+- USB playback ch 3/4 (RL/RR) -> silent (presumably the Reamp input, only used in Reamp mode).
+- Needed levels for an audible click: PipeWire sink 100 % + Takk 100 % (pedal USB OUT level at default).
+- Takk follows TAP correctly on hardware.

@@ -25,7 +25,7 @@ FREQ_NORMAL = 1000.0         # Hz
 FREQ_ACCENT = 1600.0         # beat 1 of the bar: higher pitch
 PEAK_NORMAL = 0.80           # of full scale at 100 % volume
 PEAK_ACCENT = 0.95
-DEFAULT_VOLUME = 0.60
+DEFAULT_VOLUME = 1.00          # user test 2026-11-07: 100 % needed through the pedal
 BPM_MIN, BPM_MAX = 40, 250
 FULL_SCALE = 32767
 

@@ -53,6 +53,6 @@ ever published, switch back to our own data/io.github.barni.OpenTone.svg.
 `./takk` (package takkapp/): follows pedal BPM (TAP notification 7E 02 03 -> 03 GET, PC/CC80 re-query, 1 s fallback poll)
 and plays a click via pw-cat to the NUX sink, output selector USB 1/2 | 3/4 | all, volume, accent; settings in
 ~/.config/takk/settings.json. Installed desktop entry + ~/.local/bin/takk. 205 tests OK.
-NOT yet tested with real audio on the pedal (user asleep): check where USB 1/2 vs 3/4 is heard, and that the click
+Hardware-tested 2026-11-07 morning: follows TAP; USB 1/2 -> phones+output, USB 3/4 silent (Reamp input); needs sink 100% + Takk 100%.
 follows TAP. The NUX PipeWire sink is muted by the user's system settings -> Takk shows a "Feloldás" banner.
 Can't run together with OpenTone (exclusive rawmidi port).
