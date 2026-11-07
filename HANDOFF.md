@@ -45,7 +45,7 @@ to undo: write that file's raw parts back). saving.py now retries dropped writes
 App ID io.github.barni.OpenTone, launcher `opentone` (symlink to mg300-editor; also ~/.local/bin/opentone),
 desktop entry + icon installed in ~/.local/share/{applications,icons}. Source icon: data/io.github.barni.OpenTone.svg.
 Python package is still `mg300edit` (internal). Open: EXP/PEDAL target mapping (FACTS.md "PEDAL button").
-Icon (user request): official NUX MG-300 MKII product photo (nuxaudio.com thumbnail), installed as PNG sizes in
+Icon: own generated icon (data/io.github.barni.OpenTone.svg, data/make_opentone_icon.py) installed locally since 2026-11-07; old NUX photo kept in data/*LOCAL_ONLY* (gitignored).
 ~/.local/share/icons/hicolor/*/apps/io.github.barni.OpenTone.png. NUX artwork = local/personal use only; if the app is
 ever published, switch back to our own data/io.github.barni.OpenTone.svg.
 
