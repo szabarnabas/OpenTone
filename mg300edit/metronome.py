@@ -1,14 +1,14 @@
 """OpenTone's built-in click: the Takk metronome inside the editor (no GTK here).
 
 The pedal's MIDI port is exclusive, so Takk and OpenTone cannot run together;
-this puts Takk's engine (takkapp.click.ClickGenerator + takkapp.audio.ClickPlayer /
+this puts the click engine (click.ClickGenerator + clickaudio.ClickPlayer /
 SinkWatcher) behind a small state machine the window drives:
 
   enable()   user turned the click on: start watching PipeWire sinks; as soon
              as the pedal's sink is known, start pw-cat (never before)
   disable()  stop pw-cat and the sink watcher (also on window close / quit)
   set_tempo  follows Controller "tempo" events; applies from the next beat
-             (None = not known yet -> takkapp.click.FALLBACK_BPM)
+             (None = not known yet -> click.FALLBACK_BPM)
 
 If the sink disappears while playing, the click stops and a "sink-lost" notice
 is emitted. A muted sink gives a "muted" notice; unmute() runs
@@ -29,8 +29,8 @@ import threading
 from collections import defaultdict
 from typing import Callable, Optional
 
-from takkapp import audio
-from takkapp.click import (DEFAULT_OUTPUT, FALLBACK_BPM, OUTPUT_CHOICES, OUTPUTS,
+from . import clickaudio as audio
+from .click import (DEFAULT_OUTPUT, FALLBACK_BPM, OUTPUT_CHOICES, OUTPUTS,
                            ClickGenerator)
 
 from . import APP_ID
@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 
 OUTPUT_KEYS = [k for k, _ in OUTPUT_CHOICES]
 
-# label the stream as OpenTone's in the system mixer (Takk's own names otherwise)
+# label the stream as OpenTone's in the system mixer (default names otherwise)
 PWCAT_COMMAND = functools.partial(audio.pwcat_command, node_name="opentone-click",
                                   app_name="OpenTone", app_id=APP_ID)
 

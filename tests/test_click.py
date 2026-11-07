@@ -1,22 +1,17 @@
-"""Takk (metronome) tests: click generator, routing, tempo following, pactl parsing.
+"""Built-in click (metronome) tests: click generator, routing, pactl parsing, player.
 No audio device, no PipeWire and no MIDI hardware is touched."""
 
 from __future__ import annotations
 
 import json
-import os
+from pathlib import Path
 import tempfile
 import time
 import unittest
 from array import array
-from pathlib import Path
 
-from mg300edit import protocol as P
-from mg300edit.fake import FakeTransport
-from takkapp import audio, settings
-from takkapp import tempo as T
-from takkapp.click import (CLICK_MS, FULL_SCALE, OUTPUTS, RATE, ClickGenerator, clamp_bpm)
-from tests.test_controller import Pump
+from mg300edit import clickaudio as audio
+from mg300edit.click import (CLICK_MS, FULL_SCALE, OUTPUTS, RATE, ClickGenerator, clamp_bpm)
 
 CLICK_LEN = RATE * CLICK_MS // 1000
 
@@ -208,108 +203,6 @@ class RoutingTest(unittest.TestCase):
             ClickGenerator(route=())
 
 
-class FakePedal(FakeTransport):
-    """FakeTransport whose writes are recorded (and which can stay 'disconnected')."""
-
-    def __init__(self, **kw):
-        super().__init__(latency=0.002, sysex_gap=0.0, channel_gap=0.0, **kw)
-        self.sent = []
-        self.last_errno = 0
-
-    def _write(self, msg):
-        self.sent.append(bytes(msg))
-        super()._write(msg)
-
-    def tempo_gets(self):
-        return sum(1 for m in self.sent if m == P.get_tempo())
-
-
-class TempoFollowerTest(unittest.TestCase):
-    def setUp(self):
-        self.pump = Pump()
-        self.tr = FakePedal(dispatch=self.pump.dispatch)
-        self.tempi = []
-        self.states = []
-        self.f = T.TempoFollower(self.tr, on_tempo=self.tempi.append,
-                                 on_state=lambda s, d: self.states.append(s))
-        self.f.start()
-        self.addCleanup(self.f.stop)
-
-    def test_reads_tempo_on_connect(self):
-        self.assertTrue(self.pump.until(lambda: self.f.bpm == 120))
-        self.assertEqual(self.states[0], T.STATE_CONNECTED)
-        self.assertIn(P.get_tempo(), self.tr.sent)
-        self.assertEqual(P.get_tempo(), bytes.fromhex("F04358700300F7"))
-
-    def test_poll_follows_tempo_change(self):
-        self.pump.until(lambda: self.f.bpm == 120)
-        self.tr.device.tempo = 97                       # e.g. tempo knob: no notification
-        self.f.poll()
-        self.assertTrue(self.pump.until(lambda: self.f.bpm == 97))
-        self.assertEqual(self.tempi, [120, 97])
-
-    def test_tap_notification_requeries_immediately(self):
-        self.pump.until(lambda: self.f.bpm == 120)
-        n = self.tr.tempo_gets()
-        self.tr.simulate_tap(88)                        # 7E 02 03 notification, no poll()
-        self.assertTrue(self.pump.until(lambda: self.f.bpm == 88))
-        self.assertEqual(self.tr.tempo_gets(), n + 1)
-
-    def test_program_change_requeries(self):
-        self.pump.until(lambda: self.f.bpm == 120)
-        self.tr.device.tempo = 150
-        self.tr.simulate_preset_change(3)               # C0 03
-        self.assertTrue(self.pump.until(lambda: self.f.bpm == 150))
-
-    def test_scene_change_requeries(self):
-        self.pump.until(lambda: self.f.bpm == 120)
-        self.tr.device.tempo = 66
-        self.tr.simulate_scene_change(2)                # B0 4E .., B0 50 02
-        self.assertTrue(self.pump.until(lambda: self.f.bpm == 66))
-
-    def test_polls_never_queue_up(self):
-        self.pump.until(lambda: self.f.bpm == 120)
-        self.tr.writer.sysex_gap = 0.2                  # slow link: requests would pile up
-        n = self.tr.tempo_gets()
-        for _ in range(20):
-            self.f.poll()
-        time.sleep(0.5)
-        self.assertLessEqual(self.tr.tempo_gets() - n, 2)
-
-    def test_out_of_range_reply_ignored(self):
-        self.pump.until(lambda: self.f.bpm == 120)
-        self.f._on_messages([P.tempo_response(300), P.tempo_response(20)])
-        self.assertEqual(self.f.bpm, 120)
-        self.f._on_messages([P.tempo_response(250)])
-        self.assertEqual(self.f.bpm, 250)
-
-    def test_disconnect_clears_tempo(self):
-        self.pump.until(lambda: self.f.bpm == 120)
-        self.tr._set_status(False, "Kapcsolat bontva")
-        self.assertTrue(self.pump.until(lambda: self.f.bpm is None))
-        self.assertEqual(self.f.state, T.STATE_NO_PEDAL)
-        n = len(self.tr.sent)
-        self.f.poll()                                   # nothing is sent while disconnected
-        time.sleep(0.05)
-        self.assertEqual(len(self.tr.sent), n)
-
-    def test_busy_port_state(self):
-        import errno
-        self.tr.last_errno = errno.EBUSY
-        self.tr._set_status(False, "Nem nyitható meg: /dev/snd/midiC2D0 (Device or resource busy)")
-        self.assertTrue(self.pump.until(lambda: self.f.state == T.STATE_BUSY))
-        self.tr.last_errno = errno.EACCES
-        self.tr._set_status(False, "Nem nyitható meg (Permission denied)")
-        self.assertTrue(self.pump.until(lambda: self.f.state == T.STATE_ERROR))
-
-    def test_triggers(self):
-        self.assertTrue(T.is_tempo_trigger(bytes.fromhex("F04358707E020300000000000000F7")))
-        self.assertTrue(T.is_tempo_trigger(bytes([0xC0, 5])))
-        self.assertTrue(T.is_tempo_trigger(bytes([0xB0, 0x50, 1])))
-        self.assertFalse(T.is_tempo_trigger(bytes([0xB0, 0x4E, 1])))
-        self.assertFalse(T.is_tempo_trigger(P.modified_notification()))
-
-
 PACTL_JSON = json.dumps([
     {"index": 54, "state": "RUNNING", "name": "alsa_output.pci-0000_00_1f.3.analog-stereo",
      "description": "Built-in Audio Analog Stereo", "channel_map": "front-left,front-right",
@@ -414,28 +307,6 @@ class PlayerTest(unittest.TestCase):
         p.stop()
         self.assertFalse(p.playing)
         self.assertIsNotNone(proc.poll())
-
-
-class SettingsTest(unittest.TestCase):
-    def test_roundtrip_and_validation(self):
-        with tempfile.TemporaryDirectory() as d:
-            f = Path(d) / "takk" / "settings.json"
-            self.assertEqual(settings.load(f), settings.DEFAULTS)
-            settings.save({"volume": 35, "output": "usb34", "accent": False}, f)
-            self.assertEqual(settings.load(f), {"volume": 35, "output": "usb34", "accent": False})
-            f.write_text('{"volume": 900, "output": "bogus", "accent": "yes"}')
-            self.assertEqual(settings.load(f), {**settings.DEFAULTS, "volume": 100})
-
-    def test_xdg_path(self):
-        old = os.environ.get("XDG_CONFIG_HOME")
-        os.environ["XDG_CONFIG_HOME"] = "/tmp/xdgtest"
-        try:
-            self.assertEqual(settings.path(), Path("/tmp/xdgtest/takk/settings.json"))
-        finally:
-            if old is None:
-                del os.environ["XDG_CONFIG_HOME"]
-            else:
-                os.environ["XDG_CONFIG_HOME"] = old
 
 
 if __name__ == "__main__":

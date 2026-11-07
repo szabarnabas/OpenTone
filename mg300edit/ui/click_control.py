@@ -10,7 +10,7 @@ from pathlib import Path
 
 from gi.repository import Adw, Gdk, GLib, Gtk
 
-from takkapp.click import FALLBACK_BPM, OUTPUT_CHOICES
+from ..click import FALLBACK_BPM, OUTPUT_CHOICES
 
 from ..metronome import OUTPUT_KEYS, Metronome
 

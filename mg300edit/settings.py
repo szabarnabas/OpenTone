@@ -19,7 +19,7 @@ DEFAULTS: dict[str, Any] = {
     # built-in click (Takk metronome), see mg300edit/metronome.py
     "click_volume": 100,          # % (100 needed through the pedal, user test 2026-11-07)
     "click_accent": True,         # higher-pitched beat 1 of 4
-    "click_output": "usb12",      # takkapp.click.OUTPUTS key
+    "click_output": "usb12",      # click.OUTPUTS key
 }
 
 

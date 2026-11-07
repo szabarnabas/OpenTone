@@ -73,3 +73,8 @@ Screenshot: .dev/opentone_takk.png (shot.py --takk; also _light / _narrow). NOT 
 ## Release v1.0.0 (2026-11-07)
 Tag v1.0.0 + GitHub release https://github.com/szabarnabas/OpenTone/releases/tag/v1.0.0 (OpenTone + Takk, 230 tests).
 Built-in click in OpenTone not yet confirmed by the user on hardware (standalone Takk was). User levels PATCH LEVEL by ear.
+
+## Release v1.0.1 (2026-11-07)
+New own icon; standalone Takk app REMOVED (user: built-in click is perfect). Click engine now lives in
+mg300edit/click.py + mg300edit/clickaudio.py; tests/test_click.py. Local Takk desktop entry/bin/icon uninstalled
+(~/.config/takk/settings.json left in place).

@@ -13,8 +13,8 @@ import unittest
 
 from mg300edit.metronome import Metronome
 from mg300edit.settings import Settings
-from takkapp import audio
-from takkapp.click import FALLBACK_BPM, OUTPUTS
+from mg300edit import clickaudio as audio
+from mg300edit.click import FALLBACK_BPM, OUTPUTS
 
 NUX = "alsa_output.usb-NUX_NUX_MG-300V2_2607081100-00.analog-surround-40"
 
@@ -24,7 +24,7 @@ def sink(mute=False, name=NUX):
 
 
 class FakeWatcher:
-    """Stands in for takkapp.audio.SinkWatcher (no pactl)."""
+    """Stands in for clickaudio.SinkWatcher (no pactl)."""
     instances: list = []
 
     def __init__(self, on_sinks, dispatch):
@@ -217,8 +217,8 @@ class MetronomeTest(unittest.TestCase):
         self.assertIn("application.name = OpenTone", props)
         self.assertIn("node.dont-fallback = true", props)
         self.assertEqual(cmd[cmd.index("--target") + 1], "sink.x")
-        # Takk's own labels are unchanged
-        self.assertIn("application.name = Takk", audio.pwcat_command("x")[audio.pwcat_command("x").index("-P") + 1])
+        # the engine's defaults are OpenTone's too (standalone Takk was removed in 1.0.1)
+        self.assertIn("application.name = OpenTone", audio.pwcat_command("x")[audio.pwcat_command("x").index("-P") + 1])
 
 
 if __name__ == "__main__":

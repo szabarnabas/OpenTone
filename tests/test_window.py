@@ -189,7 +189,7 @@ class WindowTest(unittest.TestCase):
         self.assertTrue(self.metronome.playing)
 
     def test_click_sink_lost_and_no_sink(self):
-        from takkapp import audio
+        from mg300edit import clickaudio as audio
         toasts = []
         self.win.toast = lambda text, timeout=3: toasts.append(text)
         watcher = self.click_on()
