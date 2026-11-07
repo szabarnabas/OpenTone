@@ -32,6 +32,24 @@ Optional desktop entry: copy `io.github.barni.OpenTone.desktop` to `~/.local/sha
 `data/io.github.barni.OpenTone.svg` to `~/.local/share/icons/hicolor/scalable/apps/`, and link
 `opentone` into a directory on your `PATH`.
 
+## Takk (metronome)
+A tiny companion app: reads the tempo from the pedal and plays a metronome click into the pedal's
+USB audio, so you hear it in the pedal's headphone/output mix. When the tempo changes on the pedal
+(TAP, preset or scene change) the click follows from the next beat.
+
+```sh
+./takk                # auto-detects the pedal (MIDI) and its PipeWire sink
+./takk --sink NAME    # play into another PipeWire sink (e.g. a null sink for testing)
+```
+- Beat 1 of 4 is accented (higher pitch; can be turned off in the menu), volume 0–100 %, Space starts/stops.
+- Output: pedal USB playback channels 1/2, 3/4 or all four. Volume, output and accent are saved in
+  `~/.config/takk/settings.json`.
+- Needs `pw-cat` and `pactl` (PipeWire). If the pedal's sink is muted in the system, Takk shows a banner
+  with a "Feloldás" (unmute) button; it never changes the mute state by itself.
+- **Takk and OpenTone can't run at the same time**: the pedal's MIDI port (ALSA rawmidi) is exclusive,
+  so whichever starts second shows that the port is busy.
+- Desktop entry: `io.github.barni.Takk.desktop` + `data/io.github.barni.Takk.svg` (install like OpenTone's).
+
 ## Protocol
 Reverse-engineered on real hardware; see [`research/FACTS.md`](research/FACTS.md). Builds on public
 MG-30/MG-400 protocol work by naikel (NUXFootSwitch), athedsx (open-mg30), voronkovd (nux-mg30-mcp)

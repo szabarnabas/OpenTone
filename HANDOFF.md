@@ -48,3 +48,11 @@ Python package is still `mg300edit` (internal). Open: EXP/PEDAL target mapping (
 Icon (user request): official NUX MG-300 MKII product photo (nuxaudio.com thumbnail), installed as PNG sizes in
 ~/.local/share/icons/hicolor/*/apps/io.github.barni.OpenTone.png. NUX artwork = local/personal use only; if the app is
 ever published, switch back to our own data/io.github.barni.OpenTone.svg.
+
+## Takk metronome (2026-11-07, night)
+`./takk` (package takkapp/): follows pedal BPM (TAP notification 7E 02 03 -> 03 GET, PC/CC80 re-query, 1 s fallback poll)
+and plays a click via pw-cat to the NUX sink, output selector USB 1/2 | 3/4 | all, volume, accent; settings in
+~/.config/takk/settings.json. Installed desktop entry + ~/.local/bin/takk. 205 tests OK.
+NOT yet tested with real audio on the pedal (user asleep): check where USB 1/2 vs 3/4 is heard, and that the click
+follows TAP. The NUX PipeWire sink is muted by the user's system settings -> Takk shows a "Feloldás" banner.
+Can't run together with OpenTone (exclusive rawmidi port).

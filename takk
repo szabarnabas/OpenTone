@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Takk launcher: metronome that follows the NUX MG-300 MKII's tempo. Extra args pass through
+# (--sink NAME, --device PATH, --debug).
+DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+export PYTHONPATH="$DIR${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m takkapp "$@"

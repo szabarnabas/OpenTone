@@ -312,6 +312,13 @@ class FakeTransport(BaseTransport):
             out = self.device._switch_scene(scene)
         self._emit_later(b"".join(out))
 
+    def simulate_tap(self, bpm: int) -> None:
+        """TAP on the pedal: tempo changes and it sends 7E 02 03 (verified 2026-11-07)."""
+        with self._lock:
+            self.device.tempo = bpm
+            self.device.tempo_extra = 1
+        self._emit_later(P.tempo_notification())
+
     def simulate_knob(self, cc: int, value: int) -> None:
         """Knob turned on the pedal: B0 <cc> <v> (+ 7E 02 14 the first time)."""
         msg = P.control_change(cc, value)

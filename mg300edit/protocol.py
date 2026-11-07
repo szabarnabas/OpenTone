@@ -37,6 +37,7 @@ CMD_NOTIFY = 0x7E          # pedal -> host notifications (7E 02 14 = edit buffer
 CMD_UNSUPPORTED = 0x7F
 
 NOTIFY_MODIFIED = 0x14
+NOTIFY_TEMPO = 0x03         # 7E 02 03 .. = tempo changed on the pedal (TAP), verified 2026-11-07
 
 # incoming-only CCs (the pedal sends them; sending them does nothing)
 CC_CURRENT_BLOCK = 78      # B0 4E <block> - block selected on the pedal UI
@@ -418,6 +419,16 @@ def modified_notification() -> bytes:
     return sysex(CMD_NOTIFY, OP_GET_RESP, bytes([NOTIFY_MODIFIED]) + bytes(4))
 
 
+def is_tempo_notification(msg: bytes) -> bool:
+    """F0 43 58 70 7E 02 03 00.. F7 = tempo changed on the pedal (sent on every TAP)."""
+    m = parse_nux(msg)
+    return bool(m and m.cmd == CMD_NOTIFY and m.op == OP_GET_RESP and m.payload[:1] == bytes([NOTIFY_TEMPO]))
+
+
+def tempo_notification() -> bytes:
+    return sysex(CMD_NOTIFY, OP_GET_RESP, bytes([NOTIFY_TEMPO]) + bytes(7))
+
+
 def unsupported_response() -> bytes:
     return sysex(CMD_UNSUPPORTED, OP_GET_RESP, bytes(4))
 
@@ -473,6 +484,8 @@ def describe(msg: bytes) -> str:
                 extra = " " + ",".join(str(b) for b in m.payload[:BLOCK_ORDER_LEN])
             elif m.cmd == CMD_NOTIFY and m.payload[:1] == bytes([NOTIFY_MODIFIED]):
                 extra = " (edit buffer modified)"
+            elif m.cmd == CMD_NOTIFY and m.payload[:1] == bytes([NOTIFY_TEMPO]):
+                extra = " (tempo changed)"
             elif m.cmd == CMD_TEMPO and m.op == OP_GET_RESP:
                 extra = f" bpm={parse_tempo(msg)}"
             elif m.cmd == CMD_CURRENT and m.op == OP_GET_RESP and m.payload:

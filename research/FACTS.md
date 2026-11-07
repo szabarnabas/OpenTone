@@ -132,3 +132,9 @@
 - CC79=n sent to the pedal sets 0x7D (accepted). Moving the EXP pedal sends NO MIDI and changes no 0C/14 bytes.
 - With 0x7D=2 on 3A (EFX/MOD/DLY bypassed there) moving EXP changed nothing audible. Unknown: which parameter each
   target controls, whether the target block must be on, and what 0x79-0x7C (00 00 00 00) mean (possibly EXP ranges).
+
+## TAP tempo (verified 2026-11-07)
+- Pressing TAP sends F0 43 58 70 7E 02 03 00.. F7 (tempo-changed notification) on every press.
+- `03 00` GET then returns the new live tempo (instantaneous, from the last tap interval; seen 40..219 BPM),
+  byte 8 switched 00 -> 01 after tapping (meaning unknown). Matches the display (~95-105 at the end of the test).
+- The rawmidi port is exclusive: only one program (OpenTone OR Takk) can talk to the pedal at a time.

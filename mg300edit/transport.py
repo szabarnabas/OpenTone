@@ -163,6 +163,7 @@ class RawMidiTransport(BaseTransport):
         self._stop = threading.Event()
         self._hotplug: Optional[threading.Thread] = None
         self._last_error = ""
+        self.last_errno = 0                 # errno of the last failed open (EBUSY = port held elsewhere)
 
     def start(self) -> None:
         super().start()
@@ -187,6 +188,7 @@ class RawMidiTransport(BaseTransport):
         try:
             fd = os.open(info.path, os.O_RDWR | os.O_NONBLOCK)
         except OSError as e:
+            self.last_errno = e.errno or 0
             msg = f"Nem nyitható meg: {info.path} ({e.strerror})"
             if msg != self._last_error:     # e.g. EBUSY / EACCES: report once, retry later
                 log.warning(msg)
@@ -194,6 +196,7 @@ class RawMidiTransport(BaseTransport):
                 self._set_status(False, msg)
             return
         self._last_error = ""
+        self.last_errno = 0
         conn = _Conn(fd, info)
         with self._lock:
             self._conn = conn
@@ -219,6 +222,7 @@ class RawMidiTransport(BaseTransport):
                     self._open(info)
                 else:
                     self._last_error = ""
+                    self.last_errno = 0
                     if self.status_text != NOT_FOUND:
                         self._set_status(False, NOT_FOUND)
             elif not os.path.exists(conn.info.path):
