@@ -4,7 +4,14 @@ file_actions.py, saving in save_actions.py, the preset list in preset_sidebar.py
 
 Settings (~/.config/mg300edit/settings.json): developer mode (debug details in
 the chain/editor + the MIDI-monitor header button; the monitor itself is always
-reachable via Ctrl+M) and the unsaved-changes question on preset switch."""
+reachable via Ctrl+M), the unsaved-changes question on preset switch and the
+built-in click's volume/accent/output.
+
+Built-in click (Takk metronome, ../metronome.py): header toggle next to TAP
+(win.click, Ctrl+K) + settings popover; follows the controller's "tempo" event
+(pedal TAP / preset / scene, our tempo spin and TAP). pw-cat only runs while
+the toggle is on; it stops on toggle off, window close and if the pedal's
+PipeWire sink disappears."""
 
 from __future__ import annotations
 
@@ -16,18 +23,22 @@ from .. import presets as PR
 from .. import protocol as P
 from ..controller import Controller
 from ..layout import BlockSpec, ParamSpec
+from ..metronome import Metronome
 from ..settings import Settings
 from ..taptempo import TapTempo
 from .block_editor import BlockEditor
 from .chain import ChainRow
+from .click_control import ClickControl
 from .file_actions import FileActions
 from .monitor import MonitorPanel
 from .preset_sidebar import PresetSidebar
 from .save_actions import SaveActions
-from .util import Guard
+from .util import Guard, glib_dispatch
 
 TICK_MS = 100            # Controller.tick() period (save timeouts, scene restore)
 TEMPO_DEBOUNCE_MS = 150  # a dragged/held tempo spin sends at most one 03 set per 150 ms
+CLICK_POLL_TICKS = 20    # while the click plays, re-read the tempo every 2 s (catches
+                         # tempo changes without a 7E 02 03 notification, like Takk)
 DIGIT_SCENES = {Gdk.KEY_1: 0, Gdk.KEY_2: 1, Gdk.KEY_3: 2,
                 Gdk.KEY_KP_1: 0, Gdk.KEY_KP_2: 1, Gdk.KEY_KP_3: 2}
 PRESET_KEYS = {Gdk.KEY_Left: -1, Gdk.KEY_Right: 1, Gdk.KEY_Page_Up: -1, Gdk.KEY_Page_Down: 1}
@@ -35,7 +46,7 @@ PRESET_KEYS = {Gdk.KEY_Left: -1, Gdk.KEY_Right: 1, Gdk.KEY_Page_Up: -1, Gdk.KEY_
 
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app: Adw.Application, ctl: Controller, show_monitor: bool = False,
-                 settings: Optional[Settings] = None):
+                 settings: Optional[Settings] = None, metronome: Optional[Metronome] = None):
         super().__init__(application=app, title="OpenTone", default_width=1200, default_height=780)
         self.ctl = ctl
         self.settings = settings if settings is not None else Settings()
@@ -43,6 +54,9 @@ class MainWindow(Adw.ApplicationWindow):
         self.selected_id: Optional[str] = None
         self.tap = TapTempo()
         self._tempo_timer: Optional[int] = None
+        self.metronome = metronome if metronome is not None else Metronome(self.settings, glib_dispatch)
+        self._mute_toast: Optional[Adw.Toast] = None
+        self._ticks = 0
 
         # ---- header ----
         header = Adw.HeaderBar()
@@ -112,6 +126,10 @@ class MainWindow(Adw.ApplicationWindow):
         sec.append("Összes saját exportálása…", "win.export-all")
         menu.append_section(None, sec)
         sec = Gio.Menu()
+        sec.append("Metronóm (Takk)", "win.click")
+        sec.append("Metronóm beállításai…", "win.click-settings")
+        menu.append_section(None, sec)
+        sec = Gio.Menu()
         sec.append("Figyelmeztetés mentetlen változásokra", "win.confirm-unsaved")
         sec.append("Fejlesztői mód", "win.developer-mode")
         sec.append("MIDI monitor", "win.monitor")
@@ -150,6 +168,8 @@ class MainWindow(Adw.ApplicationWindow):
                                   tooltip_text="Tap tempó: koppints ütemre (az utolsó 4 koppintás átlaga)")
         self.tap_btn.connect("clicked", self._on_tap)
         tempo_box.append(self.tap_btn)
+        self.click = ClickControl(self.metronome)
+        tempo_box.append(self.click)
         header.pack_end(tempo_box)
 
         # ---- body ----
@@ -178,7 +198,9 @@ class MainWindow(Adw.ApplicationWindow):
         bp = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 1180sp"))
         bp.add_setter(self.split, "collapsed", True)
         bp.add_setter(self.split, "show-sidebar", False)
-        for w in (self.save_btn, self.bpm_label, self.scene_caption, self.refresh_btn):
+        # (copy-scene and the click settings stay reachable from the main menu)
+        for w in (self.save_btn, self.bpm_label, self.scene_caption, self.refresh_btn,
+                  self.copy_scene_btn, self.click.label, self.click.menu_btn):
             bp.add_setter(w, "visible", False)
         bp.add_setter(self.save_icon_btn, "visible", True)
         bp.add_setter(self.preset_name, "width-chars", 8)
@@ -210,6 +232,12 @@ class MainWindow(Adw.ApplicationWindow):
             "confirm-unsaved", None, GLib.Variant.new_boolean(bool(self.settings.get("confirm_unsaved"))))
         cu.connect("change-state", self._on_confirm_unsaved_toggle)
         self.add_action(cu)
+        ck = Gio.SimpleAction.new_stateful("click", None, GLib.Variant.new_boolean(False))
+        ck.connect("change-state", self._on_click_toggle)
+        self.add_action(ck)
+        cs = Gio.SimpleAction.new("click-settings", None)
+        cs.connect("activate", lambda *_: self.click.show_settings())
+        self.add_action(cs)
         sb = Gio.SimpleAction.new("toggle-sidebar", None)
         sb.connect("activate", lambda *_: self.split.set_show_sidebar(not self.split.get_show_sidebar()))
         self.add_action(sb)
@@ -218,7 +246,7 @@ class MainWindow(Adw.ApplicationWindow):
                                ("win.import-preset", ["<Control>o"]),
                                ("win.export-preset", ["<Control>e"]),
                                ("win.save", ["<Control>s"]), ("win.save-as", ["<Control><Shift>s"]),
-                               ("win.rename", ["F2"])):
+                               ("win.rename", ["F2"]), ("win.click", ["<Control>k"])):
             app.set_accels_for_action(action, accels)
         self.saves = SaveActions(self, ctl, self.toast, self.monitor.note)
         self.files = FileActions(self, ctl, self.toast, self.monitor.note, saves=self.saves)
@@ -231,6 +259,10 @@ class MainWindow(Adw.ApplicationWindow):
         ctl.connect("status", self._ev_status)
         ctl.connect("preset", self._ev_preset)
         ctl.connect("tempo", self._ev_tempo)
+        ctl.connect("tempo", self.metronome.set_tempo)          # click follows from the next beat
+        self.metronome.set_tempo(ctl.tempo)
+        self.metronome.connect("state", self._ev_click_state)
+        self.metronome.connect("notice", self._ev_click_notice)
         ctl.connect("scene", self._ev_scene)
         ctl.connect("scene_index", self._ev_scene_index)
         ctl.connect("modified", self._ev_modified)
@@ -248,6 +280,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         self._tick_id = GLib.timeout_add(TICK_MS, self._tick)
         self.connect("close-request", self._on_close)
+        self.connect("destroy", lambda *_: self.metronome.shutdown())
 
     # ---------- helpers ----------
     def toast(self, text: str, timeout: int = 3) -> Adw.Toast:
@@ -260,13 +293,54 @@ class MainWindow(Adw.ApplicationWindow):
 
     def _tick(self) -> bool:
         self.ctl.tick()
+        self._ticks += 1
+        if (self._ticks % CLICK_POLL_TICKS == 0 and self.metronome.playing
+                and self.ctl.connected and not self.ctl.busy):
+            self.ctl.refresh_tempo()
         return GLib.SOURCE_CONTINUE
 
     def _on_close(self, *_):
         if self._tick_id:
             GLib.source_remove(self._tick_id)
             self._tick_id = 0
+        self.metronome.shutdown()           # never leave pw-cat running
+        self.settings.save()
         return False
+
+    # ---------- built-in click (Takk) ----------
+    def _on_click_toggle(self, action, value):
+        if value.get_boolean():
+            self.metronome.enable()
+        else:
+            self.metronome.disable()
+        action.set_state(GLib.Variant.new_boolean(self.metronome.enabled))
+
+    def _ev_click_state(self):
+        action = self.lookup_action("click")
+        if action is not None and action.get_state().get_boolean() != self.metronome.enabled:
+            action.set_state(GLib.Variant.new_boolean(self.metronome.enabled))
+        if not self.metronome.enabled:
+            self._dismiss_mute_toast()
+
+    def _ev_click_notice(self, kind: str, text: str):
+        if kind == "muted":
+            self._dismiss_mute_toast()
+            t = Adw.Toast(title=GLib.markup_escape_text(text), timeout=0, button_label="Feloldás")
+            t.connect("button-clicked", lambda *_: self.metronome.unmute())   # user's click only
+            t.connect("dismissed", lambda tt: setattr(self, "_mute_toast", None)
+                      if self._mute_toast is tt else None)
+            self._mute_toast = t
+            self.toasts.add_toast(t)
+        elif kind == "unmuted":
+            self._dismiss_mute_toast()
+        elif text:
+            self.monitor.note(f"metronóm: {text}")
+            self.toast(text, timeout=5)
+
+    def _dismiss_mute_toast(self):
+        t, self._mute_toast = self._mute_toast, None
+        if t is not None:
+            t.dismiss()
 
     # ---------- developer mode / settings ----------
     def _apply_developer_mode(self, on: bool) -> None:

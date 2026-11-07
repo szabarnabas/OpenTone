@@ -52,7 +52,17 @@ class WindowTest(unittest.TestCase):
         self.ctl = Controller(self.tr, lay, P.CCParamWriter.from_layout(lay),
                               backup_dir=os.path.join(self.tmp.name, "backups"))
         self.settings = Settings(os.path.join(self.tmp.name, "settings.json"))
-        self.win = MainWindow(self.app, self.ctl, settings=self.settings)
+        # built-in click: stand-in for pw-cat, fake sink watcher, recorded pactl
+        from mg300edit.metronome import Metronome
+        from tests.test_metronome import FakeWatcher, StandIn
+        FakeWatcher.instances = []
+        self.pwcat = StandIn()
+        self.pactl_calls = []
+        self.metronome = Metronome(self.settings, glib_dispatch, command=self.pwcat,
+                                   watcher_factory=FakeWatcher,
+                                   pactl=lambda *a: self.pactl_calls.append(a))
+        self.addCleanup(self.metronome.shutdown)
+        self.win = MainWindow(self.app, self.ctl, settings=self.settings, metronome=self.metronome)
         self.addCleanup(self.win.destroy)
         self.addCleanup(self.ctl.stop)
 
@@ -136,6 +146,101 @@ class WindowTest(unittest.TestCase):
         cur = self.ctl.preset
         self.assertFalse(self.win._on_key(None, Gdk.KEY_Right, 0, 0))   # dialog open
         self.assertEqual(self.ctl.preset, cur)
+
+    # -- built-in click (Takk metronome) --
+    def click_on(self, sinks=None):
+        from tests.test_metronome import FakeWatcher, sink
+        self.win.lookup_action("click").activate(None)          # = toggle button / Ctrl+K
+        self.assertTrue(self.metronome.enabled)
+        FakeWatcher.instances[-1].on_sinks(sinks if sinks is not None else [sink()])
+        return FakeWatcher.instances[-1]
+
+    def test_click_toggle_runs_stand_in_player(self):
+        from tests.test_metronome import NUX
+        self.assertEqual(self.app.get_accels_for_action("win.click"), ["<Control>k"])
+        self.assertFalse(self.win.click.toggle.get_active())
+        self.assertEqual(self.pwcat.calls, [])                  # nothing runs before the toggle
+        watcher = self.click_on()
+        self.assertTrue(self.metronome.playing)
+        self.assertEqual([c[0] for c in self.pwcat.calls], [NUX])
+        spin(timeout=0.05)
+        self.assertTrue(self.win.click.toggle.get_active())
+        self.assertTrue(self.win.click.led.has_css_class("armed"))
+        self.assertIn("120 BPM", self.win.click.toggle.get_tooltip_text())     # no tempo yet
+        self.win.lookup_action("click").activate(None)
+        self.assertFalse(self.metronome.playing)
+        self.assertTrue(watcher.stopped)
+        self.assertFalse(self.win.click.toggle.get_active())
+        self.assertFalse(self.win.click.led.has_css_class("armed"))
+
+    def test_click_follows_tempo(self):
+        self.connect_pedal()
+        self.click_on()
+        self.assertEqual(self.metronome.gen.bpm, 120)
+        self.tr.simulate_tap(90)                                 # pedal TAP (7E 02 03)
+        self.assertTrue(spin(lambda: self.metronome.gen.bpm == 90))
+        self.assertIn("90 BPM", self.win.click.toggle.get_tooltip_text())
+        self.win.tempo_spin.set_value(140)                       # app tempo spin / TAP
+        self.assertTrue(spin(lambda: self.metronome.gen.bpm == 140))
+        self.assertTrue(spin(lambda: self.tr.device.tempo == 140))
+        self.tr.device.tempo = 77
+        self.tr.simulate_preset_change(3)                        # preset load re-reads it
+        self.assertTrue(spin(lambda: self.metronome.gen.bpm == 77))
+        self.assertTrue(self.metronome.playing)
+
+    def test_click_sink_lost_and_no_sink(self):
+        from takkapp import audio
+        toasts = []
+        self.win.toast = lambda text, timeout=3: toasts.append(text)
+        watcher = self.click_on()
+        watcher.on_sinks([audio.Sink("laptop")])                 # pedal unplugged
+        self.assertFalse(self.metronome.playing)
+        self.assertFalse(self.win.lookup_action("click").get_state().get_boolean())
+        self.assertTrue(any("eltűnt" in t for t in toasts))
+        self.click_on([audio.Sink("laptop")])                    # no pedal sink at all
+        self.assertFalse(self.metronome.enabled)
+        self.assertTrue(any("Nem található" in t for t in toasts))
+        self.assertEqual(len(self.pwcat.calls), 1)
+
+    def test_click_mute_toast_unmutes_only_on_click(self):
+        from tests.test_metronome import NUX, sink
+        self.click_on([sink(mute=True)])
+        t = self.win._mute_toast
+        self.assertIsNotNone(t)
+        self.assertEqual(t.get_button_label(), "Feloldás")
+        spin(timeout=0.1)
+        self.assertEqual(self.pactl_calls, [])                   # never automatically
+        t.emit("button-clicked")
+        self.assertTrue(spin(lambda: self.pactl_calls == [("set-sink-mute", NUX, "0")]))
+        self.win.lookup_action("click").activate(None)           # off: toast goes away
+        self.assertIsNone(self.win._mute_toast)
+
+    def test_click_beat_led_flashes(self):
+        led = self.win.click.led
+        self.win.click.flash(True)
+        self.assertTrue(led.has_css_class("beat") and led.has_css_class("accent"))
+        self.assertTrue(spin(lambda: not led.has_css_class("beat"), 1))
+        self.click_on()                                          # 120 BPM: first beat at once
+        self.assertTrue(spin(lambda: led.has_css_class("beat"), 2))
+
+    def test_click_stops_on_close_and_popover_settings(self):
+        c = self.win.click
+        c.volume.set_value(40)
+        c.accent_row.set_active(False)
+        c.output_row.set_selected(2)
+        self.assertEqual((self.metronome.volume, self.metronome.accent, self.metronome.output),
+                         (40, False, "all"))
+        self.click_on()
+        self.assertTrue(self.metronome.playing)
+        self.win.present()                      # close() only acts on a realized window
+        spin(timeout=0.2)
+        self.win.close()
+        spin(timeout=0.05)
+        self.assertFalse(self.metronome.playing)
+        from mg300edit.settings import Settings
+        s2 = Settings(self.settings.path)
+        self.assertEqual((s2.get("click_volume"), s2.get("click_accent"), s2.get("click_output")),
+                         (40, False, "all"))
 
 
 @unittest.skipUnless(HAVE_DISPLAY, "no display for GTK")

@@ -11,6 +11,8 @@ from .. import APP_ID, __version__
 from .. import protocol as P
 from ..controller import Controller
 from ..layout import Layout
+from ..metronome import Metronome
+from ..settings import Settings
 from .util import glib_dispatch, install_css
 from .window import MainWindow
 
@@ -66,13 +68,19 @@ class MG300App(Adw.Application):
             return
         layout = Layout.load(self.args.layout)
         self.ctl = Controller(make_transport(self.args), layout, make_param_writer(self.args, layout))
-        self.win = MainWindow(self, self.ctl, show_monitor=self.args.monitor)
+        settings = Settings()
+        metronome = Metronome(settings, glib_dispatch,
+                              sink_override=getattr(self.args, "click_sink", None))
+        self.win = MainWindow(self, self.ctl, show_monitor=self.args.monitor, settings=settings,
+                              metronome=metronome)
         self.win.monitor.note(f"layout: {layout.source} ({len(layout.blocks)} blocks); "
                               f"live-edit writer: {self.ctl.param_writer.name}")
         self.win.present()
         self.ctl.start()
 
     def do_shutdown(self):
+        if self.win:
+            self.win.metronome.shutdown()       # stop pw-cat / the sink watcher
         if self.ctl:
             self.ctl.stop()
         Adw.Application.do_shutdown(self)

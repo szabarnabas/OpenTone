@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- OpenTone/Takk metronome, symbolic. Own design, MIT. -->
+  <path fill="#2e3436" fill-rule="evenodd"
+        d="M6.2 1h3.6a.9.9 0 0 1 .87.68L13.93 14a.8.8 0 0 1-.78 1H2.85a.8.8 0 0 1-.78-1L5.33 1.68A.9.9 0 0 1 6.2 1zM6.75 2.6 4.6 11h6.8L9.25 2.6z"/>
+  <path fill="#2e3436" d="M7.32 11.89 8.68 12.51 12.88 3.31 11.52 2.69z"/>
+  <path fill="#2e3436" d="M12 6.81 9.45 5.65 8.62 7.47 11.17 8.63z"/>
+</svg>

@@ -16,6 +16,10 @@ log = logging.getLogger(__name__)
 DEFAULTS: dict[str, Any] = {
     "developer_mode": False,
     "confirm_unsaved": True,      # ask Mentés / Elvetés / Mégse when leaving a modified preset
+    # built-in click (Takk metronome), see mg300edit/metronome.py
+    "click_volume": 100,          # % (100 needed through the pedal, user test 2026-11-07)
+    "click_accent": True,         # higher-pitched beat 1 of 4
+    "click_output": "usb12",      # takkapp.click.OUTPUTS key
 }
 
 
@@ -57,7 +61,10 @@ class Settings:
     def get(self, key: str) -> Any:
         return self.data.get(key, DEFAULTS.get(key))
 
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: str, value: Any, save: bool = True) -> None:
+        """Store a value; save=False only updates memory (call save() later,
+        e.g. after a slider drag ends)."""
         if self.data.get(key) != value:
             self.data[key] = value
-            self.save()
+            if save:
+                self.save()

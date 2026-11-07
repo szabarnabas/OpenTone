@@ -179,3 +179,31 @@ statuspage.compact > scrolledwindow > viewport > box { margin: 12px; }
 
 /* ---------------------------------------------------------------- monitor */
 .monitor-view { font-family: monospace; font-size: 10pt; }
+
+/* ---------------------------------------------------------------- built-in click (Takk) */
+.click-toggle { padding-left: 7px; padding-right: 8px; }
+.click-label { font-weight: bold; }
+.click-menu { padding-left: 3px; padding-right: 3px; min-width: 16px; }
+/* beat LED: dim when off, softly lit while playing, flashes on every beat.
+   Normal beats use the (bright) accent background colour, beat 1 a fixed amber:
+   both read well on the plain and the checked button, in light and dark. */
+.click-control { --click-amber: #f5b00a; }
+.click-led {
+  min-width: 8px; min-height: 8px;
+  border-radius: 999px;
+  background-color: alpha(var(--window-fg-color), 0.18);
+  box-shadow: inset 0 1px 1px alpha(black, 0.30);
+  transition: background-color 200ms ease-out, box-shadow 200ms ease-out;
+}
+.click-led.armed { background-color: alpha(var(--accent-bg-color), 0.55); }
+.click-led.beat {
+  background-color: var(--accent-bg-color);
+  box-shadow: 0 0 5px 1px alpha(var(--accent-bg-color), 0.75), inset 0 0 0 1px alpha(black, 0.12);
+  transition: none;
+}
+.click-led.beat.accent {
+  background-color: var(--click-amber);
+  box-shadow: 0 0 6px 2px alpha(var(--click-amber), 0.80), inset 0 0 0 1px alpha(black, 0.12);
+}
+.click-popover > contents { min-width: 330px; }
+.click-tempo { font-weight: 700; opacity: 0.8; }

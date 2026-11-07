@@ -112,11 +112,15 @@ def stream_channel_map(sink: Optional[Sink]) -> tuple[str, ...]:
     return DEFAULT_MAP
 
 
-def pwcat_command(target: str, channel_map: tuple[str, ...] = DEFAULT_MAP) -> list[str]:
+def pwcat_command(target: str, channel_map: tuple[str, ...] = DEFAULT_MAP, *,
+                  node_name: str = "takk", app_name: str = "Takk",
+                  app_id: str = "io.github.barni.Takk") -> list[str]:
+    """pw-cat playback command; node/app names label the stream in the mixer
+    (OpenTone's built-in click passes its own)."""
     props = ("{ channelmix.upmix = false channelmix.mix-lfe = false "
              "node.dont-fallback = true node.dont-reconnect = true "
-             "node.name = takk media.name = \"Takk metronóm\" application.name = Takk "
-             "application.id = io.github.barni.Takk }")
+             f"node.name = {node_name} media.name = \"{app_name} metronóm\" "
+             f"application.name = {app_name} application.id = {app_id} }}")
     return ["pw-cat", "--playback", "--raw", "--rate", str(RATE), "--channels", str(CHANNELS),
             "--channel-map", ",".join(channel_map), "--format", "s16", "--latency", "256",
             "--media-role", "Music", "-P", props, "--target", target, "-"]

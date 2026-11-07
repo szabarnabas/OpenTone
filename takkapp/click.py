@@ -36,6 +36,12 @@ OUTPUTS = {
     "all": (0, 1, 2, 3),
 }
 DEFAULT_OUTPUT = "usb12"
+# UI labels (shared by Takk and OpenTone's built-in click). Verified on hardware
+# 2026-11-07: USB 1/2 -> headphones + main output; USB 3/4 is silent in Normal USB
+# mode (it is the Reamp input); so 1/2 is the default and the labels say so.
+OUTPUT_CHOICES = [("usb12", "USB 1/2 – füles + kimenet"), ("usb34", "USB 3/4 – csak Reamp módban"),
+                  ("all", "Mind (1–4)")]
+FALLBACK_BPM = 120           # click tempo while the pedal has not reported one
 
 
 class Beat(NamedTuple):

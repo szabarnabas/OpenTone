@@ -115,6 +115,65 @@ class FakeEndToEnd(unittest.TestCase):
         self.pump.until(lambda: False, timeout=0.1)
         self.assertEqual(n_out, len([1 for d, m in self.traffic if d == "out" and not is_stored_get(m)]))
 
+    # -- tempo following (TAP notification 7E 02 03, preset / scene loads) --
+    def tempo_gets(self):
+        return sum(1 for d, m in self.traffic if d == "out" and m == P.get_tempo())
+
+    def loaded(self):
+        self.assertTrue(self.pump.until(lambda: self.ctl.scene is not None and self.ctl.tempo == 120))
+        self.pump.until(lambda: False, timeout=0.1)
+
+    def test_pedal_tap_notification_requeries_tempo(self):
+        self.loaded()
+        n = self.tempo_gets()
+        self.events.clear()
+        self.tr.simulate_tap(88)                      # 7E 02 03, carries no value
+        self.assertTrue(self.pump.until(lambda: self.ctl.tempo == 88))
+        self.assertEqual(self.tempo_gets(), n + 1)    # exactly one 03 GET in answer
+        self.assertIn(("tempo", (88,)), self.events)
+        self.assertEqual(self.ctl.tempo_extra, 1)     # byte 8 follows the pedal
+        self.assertFalse(self.ctl.modified)           # a TAP is not an edit-buffer change
+        self.assertFalse(any(e == "info" for e, _ in self.events))
+
+    def test_repeated_taps_follow_last_tempo(self):
+        self.loaded()
+        for bpm in (100, 104, 97):
+            self.tr.simulate_tap(bpm)
+        self.assertTrue(self.pump.until(lambda: self.ctl.tempo == 97))
+        tempi = [a[0] for e, a in self.events if e == "tempo"]
+        self.assertEqual(tempi[-1], 97)
+
+    def test_scene_change_on_pedal_rereads_tempo(self):
+        self.loaded()
+        self.tr.device.tempo = 77                     # e.g. per-scene tempo, no notification
+        self.tr.simulate_scene_change(1)              # B0 50 01
+        self.assertTrue(self.pump.until(lambda: self.ctl.tempo == 77))
+        self.assertIn(("tempo", (77,)), self.events)
+
+    def test_preset_change_on_pedal_rereads_tempo(self):
+        self.loaded()
+        self.tr.device.tempo = 133
+        self.tr.simulate_preset_change(3)             # C0 03
+        self.assertTrue(self.pump.until(lambda: self.ctl.tempo == 133))
+
+    def test_own_preset_and_scene_select_reread_tempo(self):
+        self.loaded()
+        n = self.tempo_gets()
+        self.ctl.select_preset(3)
+        self.assertTrue(self.pump.until(lambda: self.tempo_gets() > n))
+        n = self.tempo_gets()
+        self.ctl.select_scene(2)
+        self.assertTrue(self.pump.until(lambda: self.tempo_gets() > n))
+
+    def test_set_tempo_emits_tempo_event(self):
+        self.loaded()
+        self.events.clear()
+        self.ctl.set_tempo(141)
+        self.assertEqual(self.events, [("tempo", (141,))])     # at once, before any reply
+        self.ctl.set_tempo(141)                                 # unchanged: no repeat
+        self.assertEqual(self.events, [("tempo", (141,))])
+        self.assertTrue(self.pump.until(lambda: self.tr.device.tempo == 141))
+
     def test_unsupported_reply(self):
         self.assertTrue(self.pump.until(lambda: self.ctl.scene is not None))
         self.ctl.send_raw(P.get_request(0x62))

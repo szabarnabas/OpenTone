@@ -29,6 +29,8 @@ def parse_args(argv=None):
                    help="scale param values to 0-127 for CCs (default: send raw values)")
     p.add_argument("--midi-channel", type=int, default=1, choices=range(1, 17), metavar="1-16")
     p.add_argument("--monitor", action="store_true", help="show the MIDI monitor at start")
+    p.add_argument("--click-sink", metavar="NAME",
+                   help="PipeWire sink for the built-in click instead of the auto-detected NUX sink")
     p.add_argument("--debug", action="store_true")
     return p.parse_args(argv)
 

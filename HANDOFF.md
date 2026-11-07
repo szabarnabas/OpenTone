@@ -56,3 +56,16 @@ and plays a click via pw-cat to the NUX sink, output selector USB 1/2 | 3/4 | al
 Hardware-tested 2026-11-07 morning: follows TAP; USB 1/2 -> phones+output, USB 3/4 silent (Reamp input); needs sink 100% + Takk 100%.
 follows TAP. The NUX PipeWire sink is muted by the user's system settings -> Takk shows a "Feloldás" banner.
 Can't run together with OpenTone (exclusive rawmidi port).
+
+## Takk built into OpenTone (2026-11-07)
+OpenTone header: "Takk" toggle next to TAP (win.click, Ctrl+K, also in the main menu) with a beat LED
+(accent beat amber) + settings popover (Hangerő 100 %, Hangsúly az 1. ütésen, Kimenet USB 1/2 | 3/4 | Mind).
+Code: mg300edit/metronome.py (state machine around takkapp.click.ClickGenerator + takkapp.audio.ClickPlayer/
+SinkWatcher; shared OUTPUT_CHOICES/FALLBACK_BPM now live in takkapp/click.py), mg300edit/ui/click_control.py,
+own icon data/icons/opentone-metronome-symbolic.svg. Settings keys click_volume/click_accent/click_output.
+Controller now answers the pedal's TAP notification 7E 02 03 with a 03 GET and emits "tempo" (also on its
+own set_tempo); preset/scene loads already re-read 03. While the click plays, the window re-reads 03 every 2 s.
+pw-cat/pactl subscribe run only while the toggle is on; sink gone -> stop + toast; muted sink -> toast with
+"Feloldás" (pactl set-sink-mute <sink> 0, only on click). Narrow layout (<=1180sp) hides the "Takk" label, the
+popover arrow and the copy-scene button -> header fits 860 px (820 px overflowed by ~40 px before, still does).
+Screenshot: .dev/opentone_takk.png (shot.py --takk; also _light / _narrow). NOT yet tried on hardware.

@@ -12,6 +12,9 @@ USB MIDI (raw ALSA), no drivers or extra Python packages needed.
 - Colour-coded signal chain with on/off LEDs and drag & drop block order
 - Model selection, vector knobs / sliders, graphic-EQ faders, cab mic & position
 - Preset list (user + factory, 1A–9D), scenes 1/2/3, tempo + tap
+- Built-in metronome click (the Takk engine, see below): a "Takk" toggle next to TAP (Ctrl+K) plays a
+  click into the pedal's USB audio that follows the pedal tempo live (TAP on the pedal, preset/scene
+  change, the app's tempo field and TAP); beat LED in the header, volume / accent / output in its popover
 - Save / Save As / Rename to user presets with automatic backups and read-back verification
 - Export / import presets (`.mg300.json`, reads QuickTone `.mg300MK2patch`)
 - MIDI monitor with raw SysEx send, and a `--fake` pedal for development without hardware
@@ -47,7 +50,12 @@ USB audio, so you hear it in the pedal's headphone/output mix. When the tempo ch
 - Needs `pw-cat` and `pactl` (PipeWire). If the pedal's sink is muted in the system, Takk shows a banner
   with a "Feloldás" (unmute) button; it never changes the mute state by itself.
 - **Takk and OpenTone can't run at the same time**: the pedal's MIDI port (ALSA rawmidi) is exclusive,
-  so whichever starts second shows that the port is busy.
+  so whichever starts second shows that the port is busy. That's why OpenTone has the same click built
+  in: the **Takk** toggle in its header (Ctrl+K; settings via the small arrow, a right-click or the main
+  menu). It only starts `pw-cat` while switched on, stops when the pedal's sink disappears or the window
+  closes, and offers the same "Feloldás" button (in a toast) for a muted sink. Its volume, accent and
+  output are saved in OpenTone's `~/.config/mg300edit/settings.json`; `./opentone --click-sink NAME`
+  plays into another sink.
 - Desktop entry: `io.github.barni.Takk.desktop` + `data/io.github.barni.Takk.svg` (install like OpenTone's).
 
 ## Protocol

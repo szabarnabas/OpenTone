@@ -144,3 +144,12 @@
 - USB playback ch 3/4 (RL/RR) -> silent (presumably the Reamp input, only used in Reamp mode).
 - Needed levels for an audible click: PipeWire sink 100 % + Takk 100 % (pedal USB OUT level at default).
 - Takk follows TAP correctly on hardware.
+
+## Reamp / loudness measurement (2026-11-07)
+- Global menu: EDIT/EXIT + SAVE -> GLOBAL SETTING; MIC & USB item, page 3 = USB IN/OUT level, MODE (Normal/Reamp/
+  Dry Out), LOOPBACK. PEDAL button = choose EXP control block: WAH, EFX, AMP, MOD, DLY, RVB (manual p.4).
+- In REAMP mode: USB playback 1/2 feeds the effect chain; processed signal returns on USB capture 1/2
+  (capture 3/4 = guitar input noise). PATCH LEVEL (0x58) does NOT affect the USB capture (tap is pre-PL), but it
+  does affect the analog outputs, also while the PL block is bypassed.
+- Pre-PL loudness of user presets spans ~47 dB with a synthetic DI; noise gates distort results at low DI levels.
+  Automatic level matching was abandoned; user levels presets by ear in OpenTone (PL card -> PATCH LEVEL, Ctrl+S).

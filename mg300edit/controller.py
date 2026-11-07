@@ -5,7 +5,9 @@ listens to events and calls the action methods; incoming pedal data never
 causes anything to be sent back except read-only GET refreshes.
 
 Events (controller.connect(name, fn)):
-  status(connected, text)  identity(Identity)  preset(int)  tempo(int)
+  status(connected, text)  identity(Identity)  preset(int)
+  tempo(int)          - live tempo changed: pedal reply (TAP notification 7E 02 03,
+                        preset/scene loads re-read it) or our own set_tempo()
   scene()  - edit buffer (or block order) changed, redraw everything
   param(block_id, param_name, value)  - single value changed from the pedal side
   info(text)  - something worth showing (unsupported cmd, ack, ...)
@@ -169,6 +171,10 @@ class Controller:
         self._get(P.get_tempo(), "03")
         self._get(P.get_block_order(), "0D")
         self._get(self._edit_buffer_request(), "0C")
+
+    def refresh_tempo(self) -> None:
+        """Read the live tempo (03 GET); repeated calls collapse into one."""
+        self._get(P.get_tempo(), "03")
 
     def refresh_edit_buffer(self) -> None:
         """Re-read the ACTIVE scene's part (0C <p> <s>); while the active scene
@@ -426,6 +432,11 @@ class Controller:
         if P.is_modified_notification(msg):
             self._set_modified(True)
             return
+        if P.is_tempo_notification(msg):
+            # TAP on the pedal (7E 02 03, verified 2026-11-07): the notification
+            # carries no value -> read the new live tempo right away
+            self.refresh_tempo()
+            return
         if m.op == P.OP_GET_RESP:
             self._handle_response(msg, m)
         elif m.op == P.OP_SET_ACK:
@@ -672,7 +683,7 @@ class Controller:
         (a 15 set would revert it). Saving writes the tempo into all 3 parts.
         Read-only mode: local only."""
         bpm = max(P.TEMPO_MIN, min(P.TEMPO_MAX, int(bpm)))
-        self.tempo = bpm
+        self._set_tempo(bpm)                # listeners (e.g. the click) follow at once
         if not self.live:
             return
         self.transport.send(P.set_tempo(bpm, self.tempo_extra), key="set:03", move_to_end=True)
