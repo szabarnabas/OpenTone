@@ -69,3 +69,7 @@ pw-cat/pactl subscribe run only while the toggle is on; sink gone -> stop + toas
 "Feloldás" (pactl set-sink-mute <sink> 0, only on click). Narrow layout (<=1180sp) hides the "Takk" label, the
 popover arrow and the copy-scene button -> header fits 860 px (820 px overflowed by ~40 px before, still does).
 Screenshot: .dev/opentone_takk.png (shot.py --takk; also _light / _narrow). NOT yet tried on hardware.
+
+## Release v1.0.0 (2026-11-07)
+Tag v1.0.0 + GitHub release https://github.com/szabarnabas/OpenTone/releases/tag/v1.0.0 (OpenTone + Takk, 230 tests).
+Built-in click in OpenTone not yet confirmed by the user on hardware (standalone Takk was). User levels PATCH LEVEL by ear.
