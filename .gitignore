@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.dev/
+# personal preset backups
+research/backup/
+# raw data extracted from NUX QuickTone (not ours to redistribute)
+research/qt_mg300mk2_display.json
+# NUX product photo used as a local icon - not for distribution
+data/*LOCAL_ONLY*

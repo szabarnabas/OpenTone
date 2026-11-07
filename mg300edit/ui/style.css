@@ -1,0 +1,181 @@
+/* MG-300 editor stylesheet (loaded by ui/util.py install_css): header, sidebar,
+   chain cards, block editor, knobs, monitor.
+   Block colours are our own palette (not NUX artwork); each .blk-* class sets
+   --blk, everything else derives from it, so light/dark both work. */
+
+.blk-nr      { --blk: #7f93b8; }
+.blk-cmp     { --blk: #26a69a; }
+.blk-efx     { --blk: #f0883e; }
+.blk-amp     { --blk: #e5534b; }
+.blk-cab     { --blk: #b17c55; }
+.blk-eq      { --blk: #4caf50; }
+.blk-mod     { --blk: #a371f7; }
+.blk-dly     { --blk: #4a8ff0; }
+.blk-rvb     { --blk: #2fb9d0; }
+.blk-pl      { --blk: #9a9996; }
+.blk-wah     { --blk: #e3b341; }
+.blk-unknown { --blk: #77767b; }
+
+/* ---------------------------------------------------------------- chain */
+.chain-row { background-color: alpha(var(--window-fg-color), 0.025); }
+.chain-box { margin: 12px 10px 14px 10px; }
+.chain-empty { margin: 18px; }
+
+.chain-card {
+  min-width: 66px;
+  padding: 6px 4px 6px 9px;
+  border-radius: 9px;
+  background-color: var(--card-bg-color);
+  background-image: linear-gradient(to bottom, alpha(var(--blk), 0.20), alpha(var(--blk), 0.04));
+  box-shadow: inset 3px 0 var(--blk),
+              0 0 0 1px alpha(var(--blk), 0.22),
+              0 1px 2px alpha(black, 0.18);
+  transition: box-shadow 150ms ease-out, filter 150ms ease-out, opacity 150ms ease-out;
+}
+.chain-card:hover {
+  background-image: linear-gradient(to bottom, alpha(var(--blk), 0.28), alpha(var(--blk), 0.08));
+}
+.chain-card.selected {
+  background-image: linear-gradient(to bottom, alpha(var(--blk), 0.34), alpha(var(--blk), 0.12));
+  box-shadow: inset 3px 0 var(--blk),
+              0 0 0 2px var(--blk),
+              0 4px 12px alpha(black, 0.30);
+}
+.chain-card:focus-visible {
+  outline: 2px solid alpha(var(--accent-color), 0.75);
+  outline-offset: 3px;
+}
+.chain-card.bypassed { filter: grayscale(1); opacity: 0.55; }
+.chain-card.bypassed.selected { opacity: 0.8; }
+.chain-card.unknown { opacity: 0.45; }
+.chain-card.dragging { opacity: 0.3; }
+
+.chain-abbr { font-weight: 800; font-size: 13px; letter-spacing: 0.04em; }
+.chain-model { font-size: 10px; font-weight: 600; opacity: 0.72; letter-spacing: 0.02em; }
+
+.chain-connector { color: alpha(var(--window-fg-color), 0.32); }
+.chain-connector.drop { color: var(--accent-color); }
+
+/* LED: a small round light; the button around it is a bigger click target */
+button.led-btn {
+  min-width: 0; min-height: 0;
+  padding: 4px;
+  margin: -3px -2px -3px 0;
+  border-radius: 999px;
+}
+.led {
+  min-width: 10px; min-height: 10px;
+  border-radius: 999px;
+  background-color: alpha(var(--window-fg-color), 0.16);
+  box-shadow: inset 0 1px 2px alpha(black, 0.45);
+}
+button.led-btn.on .led {
+  background-color: var(--blk);
+  background-image: radial-gradient(circle at 40% 35%, alpha(white, 0.75), alpha(white, 0) 60%);
+  box-shadow: 0 0 6px 1px alpha(var(--blk), 0.75), inset 0 0 0 1px alpha(black, 0.15);
+}
+
+/* ---------------------------------------------------------------- editor */
+.block-header {
+  padding: 10px 12px 10px 14px;
+  border-radius: 12px;
+  background-color: var(--card-bg-color);
+  background-image: linear-gradient(to right, alpha(var(--blk), 0.22), alpha(var(--blk), 0.02) 60%);
+  box-shadow: inset 4px 0 var(--blk), 0 0 0 1px alpha(var(--blk), 0.20);
+}
+.blk-chip {
+  background-color: var(--blk);
+  color: rgba(0, 0, 0, 0.84);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  padding: 6px 10px;
+  border-radius: 7px;
+  min-width: 40px;
+}
+.block-header.bypassed .blk-chip { filter: grayscale(1); opacity: 0.6; }
+.block-desc { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; opacity: 0.65; }
+.model-dropdown > button { font-weight: 700; font-size: 15px; padding-left: 8px; }
+
+.pedal-face {
+  padding: 22px 16px 18px 16px;
+  border-radius: 14px;
+  background-color: var(--card-bg-color);
+  background-image: radial-gradient(ellipse at 50% 0%, alpha(var(--blk), 0.16), alpha(var(--blk), 0) 70%);
+  box-shadow: 0 0 0 1px alpha(var(--blk), 0.22), 0 2px 6px alpha(black, 0.18);
+  transition: filter 150ms ease-out, opacity 150ms ease-out;
+}
+.pedal-face.bypassed { filter: grayscale(1); opacity: 0.6; }
+
+.knob { color: var(--blk, var(--accent-color)); }
+.knob:focus-visible {
+  outline: 2px solid alpha(var(--accent-color), 0.7);
+  outline-offset: 1px;
+  border-radius: 999px;
+}
+.knob-control, .panel-item { min-width: 84px; }
+.param-readout {
+  font-size: 12px;
+  font-weight: 600;
+  font-feature-settings: "tnum";
+  opacity: 0.9;
+}
+.param-name { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; opacity: 0.72; }
+.param-value { font-family: monospace; font-feature-settings: "tnum"; min-width: 5em; }
+.editor-hint { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+.dev-info { font-family: monospace; font-size: 9.5px; opacity: 0.55; }
+.dev-line { font-size: 10.5px; margin: -4px 4px 0 4px; }
+
+.selector-buttons > button { padding: 4px 9px; font-size: 12px; font-weight: 600; }
+.selector-buttons > button:checked {
+  background-color: alpha(var(--blk), 0.85);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.fader-control { min-width: 58px; }
+.eq-fader { min-height: 168px; }
+.pedal-face scale highlight { background-color: var(--blk); }
+.pedal-face scale marks indicator { color: alpha(var(--window-fg-color), 0.35); }
+.block-editor scale highlight { background-color: var(--accent-color); }
+.block-editor .pedal-face scale highlight { background-color: var(--blk); }
+
+statuspage.compact > scrolledwindow > viewport > box { margin: 12px; }
+
+/* ---------------------------------------------------------------- header */
+.status-dot { font-size: 14px; }
+.status-dot.on { color: var(--success-color); }
+.status-dot.off { color: var(--error-color); }
+.preset-name { font-weight: bold; }
+.preset-chip {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--accent-color);
+  background-color: alpha(var(--accent-bg-color), 0.16);
+}
+.preset-chip.factory {
+  color: alpha(var(--window-fg-color), 0.75);
+  background-color: alpha(var(--window-fg-color), 0.08);
+}
+.preset-modified {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--warning-color);
+  background-color: alpha(var(--warning-bg-color), 0.16);
+}
+.scene-box .caption { margin-right: 2px; }
+.scene-group { min-width: 96px; }
+.tap-button { font-weight: bold; min-width: 3.2em; padding-left: 6px; padding-right: 6px; }
+
+/* ---------------------------------------------------------------- sidebar */
+.preset-slot { font-family: monospace; }
+.preset-sidebar row.current .preset-row-name { font-weight: bold; }
+.preset-group { font-size: smaller; opacity: 0.8; }
+.preset-modified-dot { color: var(--warning-color); font-weight: bold; }
+
+/* ---------------------------------------------------------------- monitor */
+.monitor-view { font-family: monospace; font-size: 10pt; }

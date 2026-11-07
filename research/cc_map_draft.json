@@ -1,0 +1,626 @@
+{
+ "device": "NUX MG-300 MKII (MG-300V2)",
+ "status": "DRAFT",
+ "source": "QuickTone 2.6.7.16: string table in the translation unit that also references UI_MIDI_Image_Title_MG300MK2_MG400 (the MG300MK2 Custom MIDI panel). Table index == default CC number (assumption, see confidence).",
+ "confidence": {
+  "function_list_and_order": "verified (static, from QuickTone binary)",
+  "default_cc_equals_index": "likely: device cmd 0F returns an identity-looking table; the analogous MG-400 table (same panel family, without 'P.L Position') matches CCs observed on real MG-400 hardware by willianszwy/mg-400 (type CC 1-10, knob bases 14/18/24/32/44/48/54/62/66, CC77 current block, CC79 scene)",
+  "mg300mk2_vs_mg400_shift": "MG-300MK2 table has an extra 'P.L Position' at 77, so Current Block=78, Pedal=79, Scene=80 (MG-400: 77/78/79). Must be confirmed on hardware.",
+  "scene_offset_column": "likely (MG-30 layout analogy); AMP knobs 1-6, RVB knob 4 and model CCs verified via forge file diffs"
+ },
+ "other_messages": {
+  "program_change": "PC 0-based preset number (MG-30 family convention; pedal emits C0 <preset> on identity request per FACTS)",
+  "scene_select": "CC80 value 0-2 (per this table; MG-400 uses CC79)",
+  "custom_midi_table_sysex": "cmd 0F get returns 99-byte table (FACTS: identity-looking). 92 named functions here; 7 extra entries unknown.",
+  "notes": [
+   "MG-30 family pedals drop messages sent <40 ms apart",
+   "MG-30: incoming CC does not redraw screen; MG-400: CC edits apply to the active scene's edit buffer only",
+   "Changing a model via CC resets that block's knobs to model defaults (MG-400 notes)"
+  ]
+ },
+ "functions": [
+  {
+   "cc": 0,
+   "function": "EXP Toe Switch",
+   "quicktone_range": "0/0x41"
+  },
+  {
+   "cc": 1,
+   "function": "CMP",
+   "quicktone_range": "1-",
+   "scene_offset": 1,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 2,
+   "function": "EFX",
+   "quicktone_range": "1-",
+   "scene_offset": 2,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 3,
+   "function": "AMP",
+   "quicktone_range": "1-",
+   "scene_offset": 3,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 4,
+   "function": "EQ",
+   "quicktone_range": "1-",
+   "scene_offset": 4,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 5,
+   "function": "NR",
+   "quicktone_range": "1-",
+   "scene_offset": 5,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 6,
+   "function": "MOD",
+   "quicktone_range": "1-",
+   "scene_offset": 6,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 7,
+   "function": "DLY",
+   "quicktone_range": "1-",
+   "scene_offset": 7,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 8,
+   "function": "RVB",
+   "quicktone_range": "1-",
+   "scene_offset": 8,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 9,
+   "function": "CAB",
+   "quicktone_range": "1-",
+   "scene_offset": 9,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 10,
+   "function": "P.L",
+   "quicktone_range": "NULL",
+   "scene_offset": 10,
+   "value": "model index (1-based) | 0x20 alt type | 0x40 bypass"
+  },
+  {
+   "cc": 11,
+   "function": "MIC",
+   "quicktone_range": "1-"
+  },
+  {
+   "cc": 12,
+   "function": "NULL",
+   "quicktone_range": "NULL"
+  },
+  {
+   "cc": 13,
+   "function": "NULL",
+   "quicktone_range": "NULL"
+  },
+  {
+   "cc": 14,
+   "function": "CMP Knob 1",
+   "quicktone_range": "0-100",
+   "scene_offset": 16,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 15,
+   "function": "CMP Knob 2",
+   "quicktone_range": "0-100",
+   "scene_offset": 17,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 16,
+   "function": "CMP Knob 3",
+   "quicktone_range": "0-100",
+   "scene_offset": 18,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 17,
+   "function": "CMP Knob 4",
+   "quicktone_range": "0-100",
+   "scene_offset": 19,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 18,
+   "function": "EFX Knob 1",
+   "quicktone_range": "0-100",
+   "scene_offset": 21,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 19,
+   "function": "EFX Knob 2",
+   "quicktone_range": "0-100",
+   "scene_offset": 22,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 20,
+   "function": "EFX Knob 3",
+   "quicktone_range": "0-100",
+   "scene_offset": 23,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 21,
+   "function": "EFX Knob 4",
+   "quicktone_range": "0-100",
+   "scene_offset": 24,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 22,
+   "function": "EFX Knob 5",
+   "quicktone_range": "0-100",
+   "scene_offset": 25,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 23,
+   "function": "EFX Knob 6",
+   "quicktone_range": "0-100",
+   "scene_offset": 26,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 24,
+   "function": "AMP Knob 1",
+   "quicktone_range": "0-100",
+   "scene_offset": 28,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 25,
+   "function": "AMP Knob 2",
+   "quicktone_range": "0-100",
+   "scene_offset": 29,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 26,
+   "function": "AMP Knob 3",
+   "quicktone_range": "0-100",
+   "scene_offset": 30,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 27,
+   "function": "AMP Knob 4",
+   "quicktone_range": "0-100",
+   "scene_offset": 31,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 28,
+   "function": "AMP Knob 5",
+   "quicktone_range": "0-100",
+   "scene_offset": 32,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 29,
+   "function": "AMP Knob 6",
+   "quicktone_range": "0-100",
+   "scene_offset": 33,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 30,
+   "function": "AMP Knob 7",
+   "quicktone_range": "0-100",
+   "scene_offset": 34,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 31,
+   "function": "AMP Knob 8",
+   "quicktone_range": "0-100",
+   "scene_offset": 35,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 32,
+   "function": "EQ Knob 1",
+   "quicktone_range": "0-100",
+   "scene_offset": 37,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 33,
+   "function": "EQ Knob 2",
+   "quicktone_range": "0-100",
+   "scene_offset": 38,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 34,
+   "function": "EQ Knob 3",
+   "quicktone_range": "0-100",
+   "scene_offset": 39,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 35,
+   "function": "EQ Knob 4",
+   "quicktone_range": "0-100",
+   "scene_offset": 40,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 36,
+   "function": "EQ Knob 5",
+   "quicktone_range": "0-100",
+   "scene_offset": 41,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 37,
+   "function": "EQ Knob 6",
+   "quicktone_range": "0-100",
+   "scene_offset": 42,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 38,
+   "function": "EQ Knob 7",
+   "quicktone_range": "0-100",
+   "scene_offset": 43,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 39,
+   "function": "EQ Knob 8",
+   "quicktone_range": "0-100",
+   "scene_offset": 44,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 40,
+   "function": "EQ Knob 9",
+   "quicktone_range": "0-100",
+   "scene_offset": 45,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 41,
+   "function": "EQ Knob 10",
+   "quicktone_range": "0-100",
+   "scene_offset": 46,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 42,
+   "function": "EQ Knob 11",
+   "quicktone_range": "0-100",
+   "scene_offset": 47,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 43,
+   "function": "EQ Knob 12",
+   "quicktone_range": "0-100",
+   "scene_offset": 48,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 44,
+   "function": "NR Knob 1",
+   "quicktone_range": "0-100",
+   "scene_offset": 50,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 45,
+   "function": "NR Knob 2",
+   "quicktone_range": "0-100",
+   "scene_offset": 51,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 46,
+   "function": "NR Knob 3",
+   "quicktone_range": "0-100",
+   "scene_offset": 52,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 47,
+   "function": "NR Knob 4",
+   "quicktone_range": "0-100",
+   "scene_offset": 53,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 48,
+   "function": "MOD Knob 1",
+   "quicktone_range": "0-100",
+   "scene_offset": 55,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 49,
+   "function": "MOD Knob 2",
+   "quicktone_range": "0-100",
+   "scene_offset": 56,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 50,
+   "function": "MOD Knob 3",
+   "quicktone_range": "0-100",
+   "scene_offset": 57,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 51,
+   "function": "MOD Knob 4",
+   "quicktone_range": "0-100",
+   "scene_offset": 58,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 52,
+   "function": "MOD Knob 5",
+   "quicktone_range": "0-100",
+   "scene_offset": 59,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 53,
+   "function": "MOD Knob 6",
+   "quicktone_range": "0-100",
+   "scene_offset": 60,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 54,
+   "function": "DLY Knob 1",
+   "quicktone_range": "0-100",
+   "scene_offset": 62,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 55,
+   "function": "DLY Knob 2",
+   "quicktone_range": "0-100",
+   "scene_offset": 63,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 56,
+   "function": "DLY Knob 3",
+   "quicktone_range": "0-100",
+   "scene_offset": 64,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 57,
+   "function": "DLY Knob 4",
+   "quicktone_range": "0-100",
+   "scene_offset": 65,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 58,
+   "function": "DLY Knob 5",
+   "quicktone_range": "0-100",
+   "scene_offset": 66,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 59,
+   "function": "DLY Knob 6",
+   "quicktone_range": "0-100",
+   "scene_offset": 67,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 60,
+   "function": "DLY Knob 7",
+   "quicktone_range": "0-100",
+   "scene_offset": 68,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 61,
+   "function": "DLY Knob 8",
+   "quicktone_range": "0-100",
+   "scene_offset": 69,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 62,
+   "function": "RVB Knob 1",
+   "quicktone_range": "0-100",
+   "scene_offset": 71,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 63,
+   "function": "RVB Knob 2",
+   "quicktone_range": "0-100",
+   "scene_offset": 72,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 64,
+   "function": "RVB Knob 3",
+   "quicktone_range": "0-100",
+   "scene_offset": 73,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 65,
+   "function": "RVB Knob 4",
+   "quicktone_range": "0-100",
+   "scene_offset": 74,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 66,
+   "function": "CAB Knob 1",
+   "quicktone_range": "0-100",
+   "scene_offset": 76,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 67,
+   "function": "CAB Knob 2",
+   "quicktone_range": "0-100",
+   "scene_offset": 77,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 68,
+   "function": "CAB Knob 3",
+   "quicktone_range": "0-100",
+   "scene_offset": 78,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 69,
+   "function": "CAB Knob 4",
+   "quicktone_range": "0-100",
+   "scene_offset": 79,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 70,
+   "function": "CAB Knob 5",
+   "quicktone_range": "0-100",
+   "scene_offset": 80,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 71,
+   "function": "CAB Knob 6",
+   "quicktone_range": "0-100",
+   "scene_offset": 81,
+   "value": "0-100 (raw, not scaled to 127); slot = knob index of current model"
+  },
+  {
+   "cc": 72,
+   "function": "Send",
+   "quicktone_range": "0-100",
+   "scene_offset": 83
+  },
+  {
+   "cc": 73,
+   "function": "Return",
+   "quicktone_range": "0-100",
+   "scene_offset": 84
+  },
+  {
+   "cc": 74,
+   "function": "Patch Min",
+   "quicktone_range": "0-100",
+   "scene_offset": 86
+  },
+  {
+   "cc": 75,
+   "function": "Patch Max",
+   "quicktone_range": "0-100",
+   "scene_offset": 87
+  },
+  {
+   "cc": 76,
+   "function": "Patch Level",
+   "quicktone_range": "0-100",
+   "scene_offset": 88
+  },
+  {
+   "cc": 77,
+   "function": "P.L Position",
+   "quicktone_range": "0-1",
+   "scene_offset": 89
+  },
+  {
+   "cc": 78,
+   "function": "Current Block",
+   "quicktone_range": "0-9"
+  },
+  {
+   "cc": 79,
+   "function": "Pedal",
+   "quicktone_range": "0-6"
+  },
+  {
+   "cc": 80,
+   "function": "Scene",
+   "quicktone_range": "0-2"
+  },
+  {
+   "cc": 81,
+   "function": "DRUM ENABLE",
+   "quicktone_range": "0-1"
+  },
+  {
+   "cc": 82,
+   "function": "DRUM TYPE",
+   "quicktone_range": "DYNAMIC"
+  },
+  {
+   "cc": 83,
+   "function": "DRUM LEVEL",
+   "quicktone_range": "0-100"
+  },
+  {
+   "cc": 84,
+   "function": "LOOP LEVEL",
+   "quicktone_range": "0-100"
+  },
+  {
+   "cc": 85,
+   "function": "LOOP STATE",
+   "quicktone_range": "DYNAMIC"
+  },
+  {
+   "cc": 86,
+   "function": "MICVOL",
+   "quicktone_range": "0-100"
+  },
+  {
+   "cc": 87,
+   "function": "MICTHRE",
+   "quicktone_range": "0-100"
+  },
+  {
+   "cc": 88,
+   "function": "MICDECAY",
+   "quicktone_range": "0-100"
+  },
+  {
+   "cc": 89,
+   "function": "AUXVOL",
+   "quicktone_range": "0-100"
+  },
+  {
+   "cc": 90,
+   "function": "UACIN",
+   "quicktone_range": "0-100"
+  },
+  {
+   "cc": 91,
+   "function": "UACOUT",
+   "quicktone_range": "0-100"
+  }
+ ],
+ "mg400_table_for_comparison": "identical up to CC76; then 77 Current Block(1-10), 78 Pedal(0-100), 79 Scene(0-2), 80 DRUM ENABLE, 81 DRUM TYPE, 82 DRUM LEVEL, 83 LOOP LEVEL, 84 LOOP STATE (no MIC/AUX/UAC entries)"
+}

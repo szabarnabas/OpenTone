@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# OpenTone launcher (editor for the NUX MG-300 MKII). Extra args are passed through (e.g. --fake, --monitor).
+DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+export PYTHONPATH="$DIR${PYTHONPATH:+:$PYTHONPATH}"
+exec python3 -m mg300edit "$@"

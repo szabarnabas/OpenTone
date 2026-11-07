@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=OpenTone
+GenericName=Guitar Effects Editor
+Comment=Open editor for the NUX MG-300 MKII multi-effects pedal
+Exec=opentone
+Icon=io.github.barni.OpenTone
+Terminal=false
+Categories=AudioVideo;Audio;Music;
+Keywords=NUX;MG-300;guitar;MIDI;pedal;effects;
+StartupWMClass=io.github.barni.OpenTone
+StartupNotify=true
